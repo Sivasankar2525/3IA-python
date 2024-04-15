@@ -1,0 +1,83 @@
+import tkinter as tk
+import random
+
+class SnakeGame:
+    def __init__(self, master, width=20, height=20):
+        self.master = master
+        self.master.title("Snake Game")
+
+        self.width = width
+        self.height = height
+        self.size = 20
+        self.snake = [(width // 2, height // 2)]
+        self.food = self.generate_food()
+        self.direction = "Right"
+        self.score = 0
+
+        self.canvas = tk.Canvas(master, width=self.width * self.size, height=self.height * self.size, bg="black")
+        self.canvas.pack()
+
+        self.draw_snake()
+        self.draw_food()
+
+        self.master.bind("<KeyPress>", self.change_direction)
+
+        self.move()
+
+    def draw_snake(self):
+        self.canvas.delete("snake")
+        for segment in self.snake:
+            x, y = segment
+            self.canvas.create_rectangle(x * self.size, y * self.size, (x + 1) * self.size, (y + 1) * self.size, fill="green", tags="snake")
+
+    def draw_food(self):
+        x, y = self.food
+        self.canvas.create_oval(x * self.size, y * self.size, (x + 1) * self.size, (y + 1) * self.size, fill="red", tags="food")
+
+    def generate_food(self):
+        x = random.randint(0, self.width - 1)
+        y = random.randint(0, self.height - 1)
+        return x, y
+
+    def move(self):
+        head = self.snake[0]
+        if self.direction == "Up":
+            new_head = (head[0], head[1] - 1)
+        elif self.direction == "Down":
+            new_head = (head[0], head[1] + 1)
+        elif self.direction == "Left":
+            new_head = (head[0] - 1, head[1])
+        elif self.direction == "Right":
+            new_head = (head[0] + 1, head[1])
+
+        if new_head == self.food:
+            self.score += 10
+            self.snake.insert(0, new_head)
+            self.draw_snake()
+            self.food = self.generate_food()
+            self.draw_food()
+            self.master.title("Snake Game - Score: {}".format(self.score))
+        elif 0 <= new_head[0] < self.width and 0 <= new_head[1] < self.height and new_head not in self.snake:
+            self.snake.insert(0, new_head)
+            self.draw_snake()
+            self.snake.pop()
+            self.master.after(100, self.move)
+        else:
+            self.game_over()
+
+    def change_direction(self, event):
+        if event.keysym in ["Up", "Down", "Left", "Right"]:
+            if (event.keysym == "Up" and self.direction != "Down") or \
+                    (event.keysym == "Down" and self.direction != "Up") or \
+                    (event.keysym == "Left" and self.direction != "Right") or \
+                    (event.keysym == "Right" and self.direction != "Left"):
+                self.direction = event.keysym
+
+    def game_over(self):
+        self.canvas.create_text(self.width * self.size // 2, self.height * self.size // 2, text="Game Over!", fill="white", font=("Helvetica", 24))
+        self.canvas.create_text(self.width * self.size // 2, self.height * self.size // 2 + 30, text="Score: {}".format(self.score), fill="white", font=("Helvetica", 18))
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    game = SnakeGame(root)
+    root.mainloop()
